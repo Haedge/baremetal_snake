@@ -6,7 +6,6 @@ use spin::Mutex;
 use pluggable_interrupt_os::HandlerTable;
 use pc_keyboard::DecodedKey;
 use baremetal_snake::SnakeGame;
-use baremetal_snake::MainGame;
 
 lazy_static! {
     static ref GAME: Mutex<MainGame> = Mutex::new(SnakeGame::new());
