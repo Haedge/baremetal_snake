@@ -49,7 +49,7 @@ fn draw_subheader(subheader: &str) {
 
 fn draw_game_over_header(game: &MainGame) {
     draw_normal_header(game);
-    if game.food_eaten >= 100{
+    if game.food_eaten >= 30{
         draw_subheader("Game Won. Press S to restart.");
     } else {
         draw_subheader("Game over. Press S to restart.");
@@ -230,7 +230,7 @@ const START: &'static str =
      #                                                                              #
      #                                                                              #
      #                                                                              #
-     #                              o        <                                      #
+     #                                       <                                      #
      #                                                                              #
      #                                                                              #
      #                                                                              #
@@ -392,7 +392,7 @@ impl <const WIDTH: usize, const HEIGHT: usize> SnakeGame<WIDTH, HEIGHT> {
         match self.cells[row][col] {
             Cell::Food => {
                 self.food_eaten += 1;
-                if self.food_eaten >= 100{
+                if self.food_eaten >= 30{
                     self.status = Status::Over;
                 }
                 self.cells[row][col] = Cell::Empty;
