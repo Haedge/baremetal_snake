@@ -49,7 +49,12 @@ fn draw_subheader(subheader: &str) {
 
 fn draw_game_over_header(game: &MainGame) {
     draw_normal_header(game);
-    draw_subheader("Game over. Press S to restart.");
+    if game.food_eaten >= 100{
+        draw_subheader("Game Won. Press S to restart.");
+    } else {
+        draw_subheader("Game over. Press S to restart.");
+    }
+
 }
 
 fn draw_board(game: &MainGame) {
@@ -66,13 +71,13 @@ fn get_icon_color(game: &MainGame, p: Position<BUFFER_WIDTH,GAME_HEIGHT>, cell: 
             (match game.status() {
                 Status::Over => '*',
                 _ => game.snake_icon()
-            }, Color::Yellow)
+            }, Color::Green)
         } else {
             match cell {
                 Cell::Food => ('.', Color::White),
                 Cell::Empty => (' ', Color::Black),
                 Cell::Wall => ('#', Color::Blue),
-                Cell::Body => ('O', Color::Green)
+                Cell::Body => ('o', Color::Green)
             }
 
         };
@@ -225,7 +230,7 @@ const START: &'static str =
      #                                                                              #
      #                                                                              #
      #                                                                              #
-     #                                      <                                       #
+     #                              o        <                                      #
      #                                                                              #
      #                                                                              #
      #                                                                              #
@@ -276,6 +281,7 @@ impl <const WIDTH: usize, const HEIGHT: usize> SnakeGame<WIDTH, HEIGHT> {
                 self.snake = Snake::new(Position { row: row as i16, col: col as i16 }, icon);
             },
             ' ' => self.cells[row][col] = Cell::Empty,
+            'o' => self.cells[row][col] = Cell::Body,
             _ => panic!("Unrecognized character: '{}'", icon)
         }
     }
@@ -327,25 +333,33 @@ impl <const WIDTH: usize, const HEIGHT: usize> SnakeGame<WIDTH, HEIGHT> {
                     _ => {}
                 }
             }
-            _ => {
-                let key = match key {
-                    DecodedKey::RawKey(k) => match k {
-                        KeyCode::ArrowUp => Some(Dir::N),
-                        KeyCode::ArrowDown => Some(Dir::S),
-                        KeyCode::ArrowLeft => Some(Dir::W),
-                        KeyCode::ArrowRight => Some(Dir::E),
-                        _ => None
-                    }
-                    DecodedKey::Unicode(c) => match c {
-                        'w' => Some(Dir::N),
-                        'a' => Some(Dir::W),
-                        's' => Some(Dir::S),
-                        'd' => Some(Dir::E),
-                        _ => None
-                    }
-                };
-                if key.is_some() {
-                    self.last_key = key;
+            Status::Normal => {
+                match key{
+                    DecodedKey::RawKey(KeyCode::O) | DecodedKey::Unicode('o') => {
+                        self.status = Status::Over
+                    },
+                    DecodedKey::RawKey(KeyCode::I) | DecodedKey::Unicode('i') => {
+                        self.cells[15][40] = Cell::Food;
+                    },
+                    _ => {let key = match key {
+                        DecodedKey::RawKey(k) => match k {
+                            KeyCode::ArrowUp => Some(Dir::N),
+                            KeyCode::ArrowDown => Some(Dir::S),
+                            KeyCode::ArrowLeft => Some(Dir::W),
+                            KeyCode::ArrowRight => Some(Dir::E),
+                            _ => None
+                        }
+                        DecodedKey::Unicode(c) => match c {
+                            'w' => Some(Dir::N),
+                            'a' => Some(Dir::W),
+                            's' => Some(Dir::S),
+                            'd' => Some(Dir::E),
+                            _ => None
+                        }
+                    };
+                        if key.is_some() {
+                            self.last_key = key;
+                        }}
                 }
             }
         }
@@ -359,20 +373,38 @@ impl <const WIDTH: usize, const HEIGHT: usize> SnakeGame<WIDTH, HEIGHT> {
                 if self.cells[row][col] != Cell::Wall {
                     self.move_to(neighbor, dir);
                 }
+
+                if self.cells[row][col] == Cell::Wall || self.cells[row][col] == Cell::Body {
+                    self.status = Status::Over;
+                }
+
             }
         }
     }
 
     fn move_to(&mut self, neighbor: Position<WIDTH, HEIGHT>, dir: Dir) {
+        let testnum_col = 80;
+        let testnum_row = 20;
         self.snake.pos = neighbor;
         self.snake.dir = dir;
         let (row, col) = neighbor.row_col();
+        let mut change = self.score() + 5;
         match self.cells[row][col] {
             Cell::Food => {
                 self.food_eaten += 1;
+                if self.food_eaten >= 100{
+                    self.status = Status::Over;
+                }
                 self.cells[row][col] = Cell::Empty;
-            }
+                change += 333;
+                let mut multiple_col = (&testnum_col - ((&change * self.score()) % testnum_col));
+                if multiple_col == 80 {
+                    multiple_col -= 33;
+                }
+                let mut multiple_row = (&testnum_row) - ((&change * self.score()) % testnum_row);
+                self.cells[multiple_row as usize][multiple_col as usize] = Cell::Food;
 
+            }
             _ => {}
         }
     }
